@@ -96,7 +96,9 @@ app.post('/sweep', async (request: Request, response: Response) => {
         if (actionId && ['sweep.today', 'sweep.next-week', 'sweep.remove-date'].includes(actionId) && candidates[0]) {
             await updateTaskDate(appToken, candidates[0].task.id, actionId)
         }
-        response.json({ card: sweepCard(project?.name, candidates.length, actionId === 'sweep.start' ? candidates[0] : undefined) })
+        const isReviewAction = actionId && ['sweep.today', 'sweep.next-week', 'sweep.remove-date', 'sweep.keep', 'sweep.open'].includes(actionId)
+        const remaining = isReviewAction ? candidates.slice(1) : candidates
+        response.json({ card: sweepCard(project?.name, remaining.length, actionId === 'sweep.start' || isReviewAction ? remaining[0] : undefined) })
     } catch (error) {
         console.error('Todoist task fetch failed', error)
         response.status(502).json({ error: 'Unable to fetch project tasks' })
