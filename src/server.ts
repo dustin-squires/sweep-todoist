@@ -8,6 +8,8 @@ import {
     TodoistCard,
     type TodoistCardRequest,
 } from '@doist/ui-extensions-core'
+import { getProjectTasks } from './todoist.js'
+import { findCandidates } from './sweep.js'
 
 const port = Number(process.env.PORT ?? 3000)
 const verificationToken = process.env.TODOIST_VERIFICATION_TOKEN?.trim()
@@ -40,13 +42,15 @@ function hasValidSignature(request: Request): boolean {
     )
 }
 
-function connectedCard(projectName: string | undefined): TodoistCard {
+function sweepCard(projectName: string | undefined, count?: number): TodoistCard {
     const card = new TodoistCard()
     card.todoistCardVersion = '0.6'
     card.addItem(TextBlock.from({ text: 'Sweep', size: 'large', weight: 'bolder' }))
     card.addItem(
         TextBlock.from({
-            text: `Project: ${projectName ?? 'Unknown project'}\n\nSweep is connected.`,
+            text: count === undefined
+                ? `Project: ${projectName ?? 'Unknown project'}\n\nSweep is connected.`
+                : `Project: ${projectName ?? 'Unknown project'}\n\n${count === 0 ? 'Nothing needs sweeping.' : `${count} task${count === 1 ? '' : 's'} ready to review.`}`,
             wrap: true,
         }),
     )
@@ -65,7 +69,7 @@ app.get('/health', (_request: Request, response: Response) => {
     response.json({ status: 'ok' })
 })
 
-app.post('/sweep', (request: Request, response: Response) => {
+app.post('/sweep', async (request: Request, response: Response) => {
     if (!hasValidSignature(request)) {
         response.status(401).json({ error: 'Request verification failed' })
         return
@@ -73,7 +77,24 @@ app.post('/sweep', (request: Request, response: Response) => {
 
     const extensionRequest = request.body as TodoistCardRequest
     const project = extensionRequest.context?.todoist?.project
-    response.json({ card: connectedCard(project?.name) })
+    const projectId = project?.id
+    if (!projectId) {
+        response.json({ card: sweepCard(project?.name) })
+        return
+    }
+    const appToken = request.header('x-todoist-apptoken')
+    if (!appToken) {
+        response.status(400).json({ error: 'Todoist app token missing' })
+        return
+    }
+    try {
+        const tasks = await getProjectTasks(appToken, projectId)
+        const candidates = findCandidates(tasks, new Date(), 'UTC')
+        response.json({ card: sweepCard(project?.name, candidates.length) })
+    } catch (error) {
+        console.error('Todoist task fetch failed', error)
+        response.status(502).json({ error: 'Unable to fetch project tasks' })
+    }
 })
 
 app.listen(port, () => {
