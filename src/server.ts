@@ -8,7 +8,7 @@ import {
     TodoistCard,
     type TodoistCardRequest,
 } from '@doist/ui-extensions-core'
-import { getProjectTasks } from './todoist.js'
+import { getProjectTasks, updateTaskDate } from './todoist.js'
 import { findCandidates } from './sweep.js'
 
 const port = Number(process.env.PORT ?? 3000)
@@ -91,6 +91,9 @@ app.post('/sweep', async (request: Request, response: Response) => {
         const action = extensionRequest.action as unknown as Record<string, unknown> | undefined
         const params = (action?.params ?? {}) as Record<string, unknown>
         const actionId = typeof action === 'string' ? action : (params.sweepAction as string | undefined) ?? (action?.actionType === 'submit' ? 'sweep.start' : undefined)
+        if (actionId && ['sweep.today', 'sweep.next-week', 'sweep.remove-date'].includes(actionId) && candidates[0]) {
+            await updateTaskDate(appToken, candidates[0].task.id, actionId)
+        }
         response.json({ card: sweepCard(project?.name, candidates.length, actionId === 'sweep.start' ? candidates[0] : undefined) })
     } catch (error) {
         console.error('Todoist task fetch failed', error)
