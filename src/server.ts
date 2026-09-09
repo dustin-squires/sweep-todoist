@@ -90,7 +90,9 @@ app.post('/sweep', async (request: Request, response: Response) => {
         const candidates = findCandidates(tasks, new Date(), 'UTC')
         const action = extensionRequest.action as unknown as Record<string, unknown> | undefined
         const params = (action?.params ?? {}) as Record<string, unknown>
-        const actionId = typeof action === 'string' ? action : (params.sweepAction as string | undefined) ?? (action?.actionType === 'submit' ? 'sweep.start' : undefined)
+        console.log('Review submit params:', Object.keys(params).join(', '))
+        const data = (action?.data ?? {}) as Record<string, unknown>
+        const actionId = typeof action === 'string' ? action : (action?.actionId as string | undefined) ?? (data.sweepAction as string | undefined) ?? (action?.actionType === 'submit' ? 'sweep.start' : undefined)
         if (actionId && ['sweep.today', 'sweep.next-week', 'sweep.remove-date'].includes(actionId) && candidates[0]) {
             await updateTaskDate(appToken, candidates[0].task.id, actionId)
         }
