@@ -83,6 +83,9 @@ app.post('/sweep', async (request: Request, response: Response) => {
         return
     }
     const appToken = request.header('x-todoist-apptoken')
+        ?? request.header('x-todoist-app-token')
+        ?? request.header('authorization')?.replace(/^Bearer\s+/i, '')
+        ?? (extensionRequest as TodoistCardRequest & { appToken?: string }).appToken
     if (!appToken) {
         response.status(400).json({ error: 'Todoist app token missing' })
         return
