@@ -1,6 +1,6 @@
 # Sweep for Todoist
 
-Sweep is a small Todoist Project Context Menu UI Extension prototype. Phase 1 only proves the signed extension shell: it exposes health, accepts a Todoist request, and renders a connected card with the current project name. Task reads, candidate rules, and mutations come in later approved phases.
+Sweep is a small Todoist Project Context Menu UI Extension. It finds overdue and old undated tasks, then lets you review and reschedule them.
 
 ## Local development
 
@@ -58,6 +58,8 @@ Todoist cannot call `localhost` directly. Keep the Node process running locally 
 
    Copy the app's verification token into `.env` as `TODOIST_VERIFICATION_TOKEN`, then restart `npm run dev`. Install the integration for yourself. The token is used to verify Todoist's HMAC header and is never sent to the browser.
 
+   In the UI Extension settings, grant the extension permission to read and modify tasks. Without this permission Todoist will not send the short-lived `x-todoist-apptoken` header.
+
 4. In Todoist web or desktop, open any project and choose `•••` → `Add extension…` → `Sweep`. Current Todoist clients may label this project-menu entry `Add extension…` rather than `Integrations`; the installed app is visible under Settings → Integrations. Todoist will POST the signed initial request to the tunnel, which forwards it to the local Express server. The card should show the project name and `Sweep is connected.`
 
 5. Leave both terminals open while iterating. Edit code, let `tsx watch` restart the service, then close and reopen the extension modal to send a fresh request. If ngrok gives you a new URL after restarting, update the App Console endpoint URL and reinstall if Todoist does not refresh it.
@@ -70,6 +72,6 @@ Common failures:
 - Sweep does not appear: confirm the extension is installed for your account and is configured as a Project context-menu extension.
 - Tunnel page works but Todoist fails: confirm the App Console endpoint includes `/sweep`, uses the current HTTPS tunnel URL, and the local process is still running.
 
-The expected card says `Sweep`, shows the project name, and says `Sweep is connected.` The Start sweep button is intentionally only a shell action at this phase.
+The card shows the project name and candidate count. Start sweep opens each candidate with Today, Next week, Remove date, Keep as-is, and Open task actions. Date actions update Todoist immediately.
 
 See [PLAN.md](./PLAN.md) for the product scope and the phase gates.
