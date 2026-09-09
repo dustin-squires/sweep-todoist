@@ -42,26 +42,24 @@ function hasValidSignature(request: Request): boolean {
     )
 }
 
-function sweepCard(projectName: string | undefined, count?: number): TodoistCard {
+function sweepCard(projectName: string | undefined, count?: number, candidate?: { task: { content: string; description: string; due: { string: string } | null }; reason: { type: string } }): TodoistCard {
     const card = new TodoistCard()
     card.todoistCardVersion = '0.6'
     card.addItem(TextBlock.from({ text: 'Sweep', size: 'large', weight: 'bolder' }))
     card.addItem(
         TextBlock.from({
-            text: count === undefined
+            text: candidate
+                ? `Project: ${projectName ?? 'Unknown project'}\n\n${candidate.task.content}\n\n${candidate.task.description || 'No description.'}\n\nReason: ${candidate.reason.type === 'overdue' ? 'Overdue' : 'Old and undated'}`
+                : count === undefined
                 ? `Project: ${projectName ?? 'Unknown project'}\n\nSweep is connected.`
                 : `Project: ${projectName ?? 'Unknown project'}\n\n${count === 0 ? 'Nothing needs sweeping.' : `${count} task${count === 1 ? '' : 's'} ready to review.`}`,
             wrap: true,
         }),
     )
-    card.addAction(
-        SubmitAction.from({
-            id: 'sweep.start',
-            title: 'Start sweep',
-            style: 'positive',
-            associatedInputs: 'none',
-        }),
-    )
+    if (candidate) {
+        for (const [id, title] of [['sweep.today', 'Today'], ['sweep.next-week', 'Next week'], ['sweep.remove-date', 'Remove date'], ['sweep.keep', 'Keep as-is'], ['sweep.open', 'Open task']] as const)
+            card.addAction(SubmitAction.from({ id, title, associatedInputs: 'none' }))
+    } else card.addAction(SubmitAction.from({ id: 'sweep.start', title: 'Start sweep', style: 'positive', associatedInputs: 'none' }))
     return card
 }
 
@@ -90,7 +88,8 @@ app.post('/sweep', async (request: Request, response: Response) => {
     try {
         const tasks = await getProjectTasks(appToken, projectId)
         const candidates = findCandidates(tasks, new Date(), 'UTC')
-        response.json({ card: sweepCard(project?.name, candidates.length) })
+        const actionId = (extensionRequest.action as { id?: string } | undefined)?.id
+        response.json({ card: sweepCard(project?.name, candidates.length, actionId === 'sweep.start' ? candidates[0] : undefined) })
     } catch (error) {
         console.error('Todoist task fetch failed', error)
         response.status(502).json({ error: 'Unable to fetch project tasks' })
