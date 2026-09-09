@@ -58,7 +58,7 @@ function sweepCard(projectName: string | undefined, count?: number, candidate?: 
     )
     if (candidate) {
         for (const [id, title] of [['sweep.today', 'Today'], ['sweep.next-week', 'Next week'], ['sweep.remove-date', 'Remove date'], ['sweep.keep', 'Keep as-is'], ['sweep.open', 'Open task']] as const)
-            card.addAction(SubmitAction.from({ id, title, associatedInputs: 'none' }))
+            card.addAction(SubmitAction.from({ id, title, associatedInputs: 'none', data: { sweepAction: id } }))
     } else card.addAction(SubmitAction.from({ id: 'sweep.start', title: 'Start sweep', style: 'positive', associatedInputs: 'none' }))
     return card
 }
@@ -88,7 +88,9 @@ app.post('/sweep', async (request: Request, response: Response) => {
     try {
         const tasks = await getProjectTasks(appToken, projectId)
         const candidates = findCandidates(tasks, new Date(), 'UTC')
-        const actionId = (extensionRequest.action as { id?: string } | undefined)?.id
+        const action = extensionRequest.action as unknown as Record<string, unknown> | undefined
+        const params = (action?.params ?? {}) as Record<string, unknown>
+        const actionId = typeof action === 'string' ? action : (params.sweepAction as string | undefined) ?? (action?.actionType === 'submit' ? 'sweep.start' : undefined)
         response.json({ card: sweepCard(project?.name, candidates.length, actionId === 'sweep.start' ? candidates[0] : undefined) })
     } catch (error) {
         console.error('Todoist task fetch failed', error)
