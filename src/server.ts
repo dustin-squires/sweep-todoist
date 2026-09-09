@@ -4,6 +4,7 @@ import 'dotenv/config'
 
 import {
     SubmitAction,
+    OpenUrlAction,
     TextBlock,
     TodoistCard,
     type TodoistCardRequest,
@@ -42,7 +43,7 @@ function hasValidSignature(request: Request): boolean {
     )
 }
 
-function sweepCard(projectName: string | undefined, count?: number, candidate?: { task: { content: string; description: string; due: { string: string } | null }; reason: { type: string } }): TodoistCard {
+function sweepCard(projectName: string | undefined, count?: number, candidate?: { task: { content: string; description: string; url: string; due: { string: string } | null }; reason: { type: string } }): TodoistCard {
     const card = new TodoistCard()
     card.todoistCardVersion = '0.6'
     card.addItem(TextBlock.from({ text: 'Sweep', size: 'large', weight: 'bolder' }))
@@ -57,8 +58,9 @@ function sweepCard(projectName: string | undefined, count?: number, candidate?: 
         }),
     )
     if (candidate) {
-        for (const [id, title] of [['sweep.today', 'Today'], ['sweep.next-week', 'Next week'], ['sweep.remove-date', 'Remove date'], ['sweep.keep', 'Keep as-is'], ['sweep.open', 'Open task']] as const)
+        for (const [id, title] of [['sweep.today', 'Today'], ['sweep.next-week', 'Next week'], ['sweep.remove-date', 'Remove date'], ['sweep.keep', 'Keep as-is']] as const)
             card.addAction(SubmitAction.from({ id, title, associatedInputs: 'none', data: { sweepAction: id } }))
+        card.addAction(OpenUrlAction.from({ id: 'sweep.open', title: 'Open task', url: candidate.task.url }))
     } else card.addAction(SubmitAction.from({ id: 'sweep.start', title: 'Start sweep', style: 'positive', associatedInputs: 'none' }))
     return card
 }
@@ -87,7 +89,8 @@ app.post('/sweep', async (request: Request, response: Response) => {
     }
     try {
         const tasks = await getProjectTasks(appToken, projectId)
-        const candidates = findCandidates(tasks, new Date(), 'UTC')
+        const userTimezone = ((extensionRequest.context?.user as unknown as { timezone?: string } | undefined)?.timezone) ?? 'UTC'
+        const candidates = findCandidates(tasks, new Date(), userTimezone)
         const action = extensionRequest.action as unknown as Record<string, unknown> | undefined
         const params = (action?.params ?? {}) as Record<string, unknown>
         console.log('Review submit params:', Object.keys(params).join(', '))
