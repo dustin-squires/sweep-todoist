@@ -4,7 +4,6 @@ import 'dotenv/config'
 
 import {
     SubmitAction,
-    OpenUrlAction,
     TextBlock,
     TodoistCard,
     type TodoistCardRequest,
@@ -50,7 +49,7 @@ function sweepCard(projectName: string | undefined, count?: number, candidate?: 
     card.addItem(
         TextBlock.from({
             text: candidate
-                ? `Project: ${projectName ?? 'Unknown project'}\n\n${candidate.task.content}\n\n${candidate.task.description || 'No description.'}\n\nReason: ${candidate.reason.type === 'overdue' ? 'Overdue' : 'Old and undated'}`
+                ? `Project: ${projectName ?? 'Unknown project'}\n\n${candidate.task.content}\n\n${candidate.task.description || 'No description.'}\n\nReason: ${candidate.reason.type === 'overdue' ? 'Overdue' : 'Old and undated'}\n\n[Open task](${candidate.task.url})`
                 : count === undefined
                 ? `Project: ${projectName ?? 'Unknown project'}\n\nSweep is connected.`
                 : `Project: ${projectName ?? 'Unknown project'}\n\n${count === 0 ? 'Nothing needs sweeping.' : `${count} task${count === 1 ? '' : 's'} ready to review.`}`,
@@ -60,7 +59,6 @@ function sweepCard(projectName: string | undefined, count?: number, candidate?: 
     if (candidate) {
         for (const [id, title] of [['sweep.today', 'Today'], ['sweep.next-week', 'Next week'], ['sweep.remove-date', 'Remove date'], ['sweep.keep', 'Keep as-is']] as const)
             card.addAction(SubmitAction.from({ id, title, associatedInputs: 'none', data: { sweepAction: id } }))
-        card.addAction(OpenUrlAction.from({ id: 'sweep.open', title: 'Open', url: candidate.task.url }))
     } else card.addAction(SubmitAction.from({ id: 'sweep.start', title: 'Start sweep', style: 'positive', associatedInputs: 'none' }))
     return card
 }
