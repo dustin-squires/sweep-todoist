@@ -82,10 +82,20 @@ app.post('/sweep', async (request: Request, response: Response) => {
         response.json({ card: sweepCard(project?.name) })
         return
     }
+    const todoistContext = (extensionRequest.context?.todoist ?? {}) as Record<string, unknown>
+    const additionalUserContext = (todoistContext.additionalUserContext ?? {}) as Record<string, unknown>
     const appToken = request.header('x-todoist-apptoken')
         ?? request.header('x-todoist-app-token')
         ?? request.header('authorization')?.replace(/^Bearer\s+/i, '')
         ?? (extensionRequest as TodoistCardRequest & { appToken?: string }).appToken
+        ?? (todoistContext.appToken as string | undefined)
+        ?? (todoistContext.apptoken as string | undefined)
+        ?? (todoistContext.token as string | undefined)
+        ?? (additionalUserContext.appToken as string | undefined)
+        ?? (additionalUserContext.apptoken as string | undefined)
+        ?? (additionalUserContext.token as string | undefined)
+        ?? (additionalUserContext.apiToken as string | undefined)
+        ?? (additionalUserContext.api_token as string | undefined)
     if (!appToken) {
         response.status(400).json({ error: 'Todoist app token missing' })
         return
