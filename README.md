@@ -45,6 +45,8 @@ Todoist cannot call `localhost` directly. Keep the Node process running locally 
    ngrok http 3000
    ```
 
+   If `ngrok` is not installed, on macOS with Homebrew install it with `brew install ngrok`, then authenticate once with `ngrok config add-authtoken <token-from-ngrok>`. As a no-install fallback, run `npx --yes localtunnel --port 3000`; it prints an HTTPS URL that can be used the same way.
+
    Copy the `https://...` forwarding URL. The tunnel URL is the public front door; the code and server still run on your laptop.
 
 3. Open the [Todoist App Management Console](https://app.todoist.com/app_console), create or open the Sweep app, and add a UI Extension with:
