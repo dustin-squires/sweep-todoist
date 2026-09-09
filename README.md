@@ -58,7 +58,7 @@ Todoist cannot call `localhost` directly. Keep the Node process running locally 
 
    Copy the app's verification token into `.env` as `TODOIST_VERIFICATION_TOKEN`, then restart `npm run dev`. Install the integration for yourself. The token is used to verify Todoist's HMAC header and is never sent to the browser.
 
-4. In Todoist web or desktop, open any project and choose `•••` → `Integrations` → `Sweep`. Todoist will POST the signed initial request to the tunnel, which forwards it to the local Express server. The card should show the project name and `Sweep is connected.`
+4. In Todoist web or desktop, open any project and choose `•••` → `Add extension…` → `Sweep`. Current Todoist clients may label this project-menu entry `Add extension…` rather than `Integrations`; the installed app is visible under Settings → Integrations. Todoist will POST the signed initial request to the tunnel, which forwards it to the local Express server. The card should show the project name and `Sweep is connected.`
 
 5. Leave both terminals open while iterating. Edit code, let `tsx watch` restart the service, then close and reopen the extension modal to send a fresh request. If ngrok gives you a new URL after restarting, update the App Console endpoint URL and reinstall if Todoist does not refresh it.
 

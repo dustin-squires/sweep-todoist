@@ -124,6 +124,7 @@ This adds roughly 25 lines and one environment variable (`TODOIST_VERIFICATION_T
 - The official examples are useful for flow, token extraction, and raw-body HMAC handling, but their dependency/runtime versions are stale and their HMAC comparison is not timing-safe.
 - Todoist still labels the UI Extension documentation preliminary, and UI Extensions remain web/desktop only. Live phase gates are therefore required.
 - The App Console's actual Data Exchange Format choices, consent behavior, serialized submit-data round trip, card button wrapping, and native interpretation of `"next week"` can only be confirmed in Phase 1–4 live checks.
+- Live verification on 2026-09-09 showed the current project menu uses `Add extension…` for this entry point, while Settings → Integrations lists the installed Sweep app. The brief/docs' `Integrations` project-menu label is stale for this client.
 
 ## Sources inspected
 
