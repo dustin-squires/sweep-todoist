@@ -1,0 +1,29 @@
+{
+  "name": "sweep-todoist",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sweep — a small Todoist Project Context Menu UI Extension",
+  "type": "module",
+  "engines": {
+    "node": ">=24",
+    "npm": ">=11"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@doist/todoist-sdk": "15.2.0",
+    "@doist/ui-extensions-core": "6.0.0",
+    "dotenv": "17.4.2",
+    "express": "5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "5.0.6",
+    "@types/node": "24.13.3",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3"
+  }
+}
