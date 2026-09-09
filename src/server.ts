@@ -60,7 +60,7 @@ function sweepCard(projectName: string | undefined, count?: number, candidate?: 
     if (candidate) {
         for (const [id, title] of [['sweep.today', 'Today'], ['sweep.next-week', 'Next week'], ['sweep.remove-date', 'Remove date'], ['sweep.keep', 'Keep as-is']] as const)
             card.addAction(SubmitAction.from({ id, title, associatedInputs: 'none', data: { sweepAction: id } }))
-        card.addAction(OpenUrlAction.from({ id: 'sweep.open', title: 'Open task', url: candidate.task.url }))
+        card.addAction(OpenUrlAction.from({ id: 'sweep.open', title: 'Open', url: candidate.task.url }))
     } else card.addAction(SubmitAction.from({ id: 'sweep.start', title: 'Start sweep', style: 'positive', associatedInputs: 'none' }))
     return card
 }
