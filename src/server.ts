@@ -46,21 +46,21 @@ function sweepCard(projectName: string | undefined, count?: number, candidate?: 
     const card = new TodoistCard()
     card.todoistCardVersion = '0.6'
     card.addItem(TextBlock.from({ text: 'Sweep', size: 'large', weight: 'bolder' }))
-    if (candidate) card.addItem(TextBlock.from({ text: 'Review task', size: 'medium', weight: 'bolder' }))
+    if (candidate) card.addItem(TextBlock.from({ text: `${candidateIds.indexOf(candidate.task.id) + 1} of ${candidateIds.length}`, size: 'small' }))
     card.addItem(
         TextBlock.from({
             text: candidate
-                ? `Project: ${projectName ?? 'Unknown project'}\n\n**${candidate.task.content}**\n\n**Description**\n${candidate.task.description || 'No description.'}\n\n**Reason**\n${candidate.reason.type === 'overdue' ? 'Overdue' : 'Old and undated'}\n\n[Open task](${candidate.task.url})`
+                ? `**${candidate.task.content}**\n\n${candidate.reason.type === 'overdue' ? `Overdue${candidate.task.due?.date ? (() => { const days = Math.max(1, Math.floor((Date.now() - new Date(`${candidate.task.due.date}T00:00:00Z`).getTime()) / 86400000)); return ` by ${days} day${days === 1 ? '' : 's'}` })() : ''}` : 'Undated for 30+ days'}\n\n_${projectName ?? ''}_\n\n${candidate.task.description ? `${candidate.task.description}\n\n` : ''}[Open task ↗](${candidate.task.url})`
                 : count === undefined
                 ? `Project: ${projectName ?? 'Unknown project'}\n\nSweep is connected.`
-                : `Project: ${projectName ?? 'Unknown project'}\n\n${count === 0 ? 'Nothing needs sweeping.' : `${count} task${count === 1 ? '' : 's'} ready to review.`}`,
+                : `Project: ${projectName ?? 'Unknown project'}\n\n${count === 0 ? 'All swept. Nothing needs a decision.' : `${count} task${count === 1 ? '' : 's'} could use a quick look.`}`,
             wrap: true,
         }),
     )
     if (candidate) {
-        for (const [id, title] of [['sweep.today', 'Today'], ['sweep.next-week', 'Next week'], ['sweep.remove-date', 'Remove date'], ['sweep.keep', 'Keep as-is']] as const)
+        for (const [id, title] of [['sweep.today', 'Today'], ['sweep.next-week', 'Next week'], ...(candidate.reason.type === 'overdue' ? [['sweep.remove-date', 'Remove date'] as const] : []), ['sweep.keep', 'Keep as-is']] as const)
             card.addAction(SubmitAction.from({ id, title, associatedInputs: 'none', data: { sweepAction: id, taskId: candidate.task.id, remainingTaskIds: candidateIds } }))
-    } else card.addAction(SubmitAction.from({ id: 'sweep.start', title: 'Start sweep', style: 'positive', associatedInputs: 'none', data: { remainingTaskIds: candidateIds } }))
+    } else if (count !== 0) card.addAction(SubmitAction.from({ id: 'sweep.start', title: 'Start sweep', style: 'positive', associatedInputs: 'none', data: { remainingTaskIds: candidateIds } }))
     return card
 }
 
@@ -93,14 +93,18 @@ app.post('/sweep', async (request: Request, response: Response) => {
         const action = extensionRequest.action as unknown as Record<string, unknown> | undefined
         const params = (action?.params ?? {}) as Record<string, unknown>
         const data = (action?.data ?? {}) as Record<string, unknown>
-        const actionId = typeof action === 'string' ? action : (action?.actionId as string | undefined) ?? (data.sweepAction as string | undefined) ?? (action?.actionType === 'submit' ? 'sweep.start' : undefined)
+        const actionId = typeof action === 'string' ? action : (action?.actionId as string | undefined) ?? (data.sweepAction as string | undefined)
         const requestedTaskId = data.taskId as string | undefined
-        const current = candidates.find(c => c.task.id === requestedTaskId) ?? candidates[0]
+        const stateIds = Array.isArray(data.remainingTaskIds) ? data.remainingTaskIds as string[] : undefined
+        const sessionCandidates = stateIds ? candidates.filter(c => stateIds.includes(c.task.id)) : candidates
+        const current = sessionCandidates.find(c => c.task.id === requestedTaskId) ?? sessionCandidates[0]
         if (actionId && ['sweep.today', 'sweep.next-week', 'sweep.remove-date'].includes(actionId) && current) {
             await updateTaskDate(appToken, current.task.id, actionId)
         }
         const isReviewAction = actionId && ['sweep.today', 'sweep.next-week', 'sweep.remove-date', 'sweep.keep', 'sweep.open'].includes(actionId)
-        const remaining = isReviewAction ? candidates.filter(c => c.task.id !== current?.task.id) : candidates
+        const remaining = isReviewAction
+            ? sessionCandidates.filter(c => c.task.id !== current?.task.id)
+            : candidates
         response.json({ card: sweepCard(project?.name, remaining.length, actionId === 'sweep.start' || isReviewAction ? remaining[0] : undefined, remaining.map(c => c.task.id)) })
     } catch (error) {
         console.error('Todoist task fetch failed', error)
