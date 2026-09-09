@@ -14,6 +14,6 @@ export async function getProjectTasks(token: string, projectId: string): Promise
 
 export async function updateTaskDate(token: string, taskId: string, action: string): Promise<Task> {
     const api = new TodoistApi(token)
-    const dueString = action === 'sweep.today' ? 'today' : action === 'sweep.next-week' ? 'next week' : 'no date'
+    const dueString = action === 'sweep.today' ? 'today' : action === 'sweep.next-week' ? 'next week' : null
     return api.updateTask(taskId, { dueString, dueLang: 'en' })
 }

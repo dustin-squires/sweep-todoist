@@ -1,5 +1,7 @@
 # Sweep for Todoist
 
+Sweep reviews project tasks that may need a decision: overdue tasks and tasks left undated for 30+ days. It is designed to reduce scheduling debt inside Todoist without creating another dashboard.
+
 Sweep is a small Todoist Project Context Menu UI Extension. It finds overdue and old undated tasks, then lets you review and reschedule them.
 
 ## Local development

@@ -24,6 +24,8 @@ export function findCandidates(tasks: Task[], now: Date, timeZone = 'UTC'): Swee
     return tasks.map(task => ({ task, reason: getSweepReason(task, now, timeZone) })).filter((x): x is SweepCandidate => x.reason !== null)
         .sort((a, b) => {
             const rank = (r: SweepReason) => r.type === 'overdue' ? 0 : 1
-            return rank(a.reason) - rank(b.reason) || (a.task.addedAt?.getTime() ?? 0) - (b.task.addedAt?.getTime() ?? 0)
+            const dueA = a.task.due?.date ? Date.parse(a.task.due.date) : Number.MAX_SAFE_INTEGER
+            const dueB = b.task.due?.date ? Date.parse(b.task.due.date) : Number.MAX_SAFE_INTEGER
+            return rank(a.reason) - rank(b.reason) || (a.reason.type === 'overdue' ? dueA - dueB : (a.task.addedAt?.getTime() ?? 0) - (b.task.addedAt?.getTime() ?? 0))
         })
 }
